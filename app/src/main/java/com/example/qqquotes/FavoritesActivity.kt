@@ -2,13 +2,11 @@ package com.example.qqquotes
 
 import android.content.Intent
 import android.content.SharedPreferences
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toDrawable
+import androidx.appcompat.app.AppCompatActivity
 
 class FavoritesActivity : AppCompatActivity() {
 
@@ -39,64 +37,55 @@ class FavoritesActivity : AppCompatActivity() {
 
             val liked = R.drawable.ic_heart_black_24dp
             val unLike = R.drawable.ic_heart_outline_24dp
-            var favL : MutableSet<String>? = null
+            var favL: MutableSet<String>? = null
 
             val tvQuote: TextView = findViewById(R.id.tv_quote)
             tvQuote.text = quotes?.get(curIndex)
 
-            if (favQuotes.size > 1)
-            {
+            if (favQuotes.size > 1) {
                 ivLeft.visibility = View.VISIBLE
                 ivRight.visibility = View.VISIBLE
             }
 
-            ivRight.setOnClickListener{
+            ivRight.setOnClickListener {
                 if (++curr >= favQuotes.size) curr = 0
                 curIndex = favQuotes[curr].toInt()
                 tvQuote.text = quotes?.get(curIndex)
-                if (favL != null && !favL!!.contains(curIndex.toString()))
-                {
+                if (favL != null && !favL!!.contains(curIndex.toString())) {
                     btnFav.setImageResource(unLike)
                     btnFav.tag = "unlike"
-                }
-                else
-                {
+                } else {
                     btnFav.setImageResource(liked)
                     btnFav.tag = "like"
                 }
             }
-            ivLeft.setOnClickListener{
+            ivLeft.setOnClickListener {
                 if (--curr < 0) curr = favQuotes.size - 1
                 curIndex = favQuotes[curr].toInt()
-                if (favL != null && !favL!!.contains(curIndex.toString()))
-                {
+                if (favL != null && !favL!!.contains(curIndex.toString())) {
                     btnFav.setImageResource(unLike)
                     btnFav.tag = "unlike"
-                }
-                else
-                {
+                } else {
                     btnFav.setImageResource(liked)
                     btnFav.tag = "like"
                 }
                 tvQuote.text = quotes?.get(curIndex)
             }
 
-            btnShare.setOnClickListener{
+            btnShare.setOnClickListener {
                 val iShare = Intent(Intent.ACTION_SEND)
                 iShare.setType("text/plain")
                 iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
                 startActivity(Intent.createChooser(iShare, "Share quote via"))
             }
 
-            if (favQuotes.contains(curIndex.toString()))
-            {
+            if (favQuotes.contains(curIndex.toString())) {
                 btnFav.setImageResource(liked)
                 btnFav.tag = "like"
             }
             btnFav.visibility = View.VISIBLE
-            btnFav.setOnClickListener{
-                if (btnFav.tag == "like")
-                {
+            btnFav.setOnClickListener {
+                if (btnFav.tag == "like") {
                     btnFav.setImageResource(unLike)
                     btnFav.tag = "unlike"
                     favL = pref.getStringSet("favI", null)
@@ -105,9 +94,7 @@ class FavoritesActivity : AppCompatActivity() {
                     val editor = pref.edit()
                     editor.putStringSet("favI", setL)
                     editor.apply()
-                }
-                else
-                {
+                } else {
                     btnFav.setImageResource(liked)
                     btnFav.tag = "like"
                     favL = pref.getStringSet("favI", null)
