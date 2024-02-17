@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">QQQuoteS</string>
+    <string name="icon_to_change_the_quote">Icon to change the quote</string>
+    <string name="icon_to_favorite_a_quote">Icon to favorite a quote</string>
+    <string name="quote_text">Fill your life with quotes, for they are the echoes of wisdom and the colors of inspiration that illuminate the canvas of our minds.</string>
+    <string name="icon_to_share_a_quote">Icon to share a quote</string>
+    <string name="icon_to_go_to_previous_quote">Icon to go to previous quote</string>
+    <string name="icon_to_go_to_next_quote">Icon to go to next quote</string>
+    <string name="favorites">Favorites</string>
+</resources>
