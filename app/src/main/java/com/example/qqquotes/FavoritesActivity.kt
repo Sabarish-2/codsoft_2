@@ -25,12 +25,19 @@ class FavoritesActivity : AppCompatActivity() {
         val quotes: java.util.ArrayList<String>? = intent.getStringArrayListExtra("Quotes")
         val pref: SharedPreferences = getSharedPreferences("favQ", MODE_PRIVATE)
         val favQuotes = pref.getStringSet("favI", null)?.toMutableList()
+        val btnShare: ImageView = findViewById(R.id.im_quote_share)
+        val tvQuote: TextView = findViewById(R.id.tv_quote)
 
+        btnShare.setOnClickListener {
+            val iShare = Intent(Intent.ACTION_SEND)
+            iShare.setType("text/plain")
+            iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
+            startActivity(Intent.createChooser(iShare, "Share quote via"))
+        }
         if (!favQuotes.isNullOrEmpty()) {
             val ivLeft: ImageView = findViewById(R.id.im_quote_left)
             val ivRight: ImageView = findViewById(R.id.im_quote_right)
             val btnFav: ImageView = findViewById(R.id.im_quote_like)
-            val btnShare: ImageView = findViewById(R.id.im_quote_share)
 
             var curr = 0
             var curIndex = favQuotes[curr].toInt()
@@ -39,7 +46,6 @@ class FavoritesActivity : AppCompatActivity() {
             val unLike = R.drawable.ic_heart_outline_24dp
             var favL: MutableSet<String>? = null
 
-            val tvQuote: TextView = findViewById(R.id.tv_quote)
             tvQuote.text = quotes?.get(curIndex)
 
             if (favQuotes.size > 1) {
@@ -70,13 +76,6 @@ class FavoritesActivity : AppCompatActivity() {
                     btnFav.tag = "like"
                 }
                 tvQuote.text = quotes?.get(curIndex)
-            }
-
-            btnShare.setOnClickListener {
-                val iShare = Intent(Intent.ACTION_SEND)
-                iShare.setType("text/plain")
-                iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
-                startActivity(Intent.createChooser(iShare, "Share quote via"))
             }
 
             if (favQuotes.contains(curIndex.toString())) {
