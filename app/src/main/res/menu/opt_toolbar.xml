@@ -3,7 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/btn_fav"
-        app:showAsAction="ifRoom"
         android:title="@string/favorites"
-        />
+        app:showAsAction="ifRoom" />
 </menu>

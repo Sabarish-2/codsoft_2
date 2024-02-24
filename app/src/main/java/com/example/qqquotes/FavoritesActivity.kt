@@ -3,7 +3,9 @@ package com.example.qqquotes
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +22,8 @@ class FavoritesActivity : AppCompatActivity() {
         toolBar = findViewById(R.id.toolBar)
         setSupportActionBar(toolBar)
         supportActionBar?.title = "Favorite Quotes"
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+//        supportActionBar?.
 
 
         val quotes: java.util.ArrayList<String>? = intent.getStringArrayListExtra("Quotes")
@@ -109,5 +113,10 @@ class FavoritesActivity : AppCompatActivity() {
                 favL = pref.getStringSet("favI", null)
             }
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        super.onBackPressedDispatcher.onBackPressed()
+        return super.onOptionsItemSelected(item)
     }
 }

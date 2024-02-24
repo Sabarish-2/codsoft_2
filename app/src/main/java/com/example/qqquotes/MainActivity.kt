@@ -3,13 +3,11 @@ package com.example.qqquotes
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
@@ -408,14 +406,11 @@ class MainActivity : AppCompatActivity() {
 
         tvQuote.isAllCaps = rCAPS
         when {
-            rI ->
-                tvQuote.setTypeface(null, Typeface.ITALIC)
+            rI -> tvQuote.setTypeface(null, Typeface.ITALIC)
 
-            rBI ->
-                tvQuote.setTypeface(null, Typeface.BOLD_ITALIC)
+            rBI -> tvQuote.setTypeface(null, Typeface.BOLD_ITALIC)
 
-            rB ->
-                tvQuote.setTypeface(null, Typeface.BOLD)
+            rB -> tvQuote.setTypeface(null, Typeface.BOLD)
         }
     }
 
@@ -440,8 +435,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.opt_toolbar, menu)
-//        val btn: Button = findViewById(R.id.btn_fav)
-//        btn.setBackgroundColor(Color.parseColor("#000000"))
         return super.onCreateOptionsMenu(menu)
     }
 
