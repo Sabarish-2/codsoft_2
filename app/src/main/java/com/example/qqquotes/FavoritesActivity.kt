@@ -1,19 +1,21 @@
 package com.example.qqquotes
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 
 class FavoritesActivity : AppCompatActivity() {
 
     private lateinit var toolBar: androidx.appcompat.widget.Toolbar
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -23,14 +25,20 @@ class FavoritesActivity : AppCompatActivity() {
         setSupportActionBar(toolBar)
         supportActionBar?.title = "Favorite Quotes"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-//        supportActionBar?.
-
 
         val quotes: java.util.ArrayList<String>? = intent.getStringArrayListExtra("Quotes")
         val pref: SharedPreferences = getSharedPreferences("favQ", MODE_PRIVATE)
         val favQuotes = pref.getStringSet("favI", null)?.toMutableList()
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
         val tvQuote: TextView = findViewById(R.id.tv_quote)
+        val cv: ConstraintLayout = findViewById(R.id.cv)
+        val btnReStyle: ImageView = findViewById(R.id.im_quote_restyle)
+
+        btnReStyle.setOnClickListener {
+            cv.setBackgroundColor(MainActivity.generateRandomColor())
+            MainActivity.randomStyles(tvQuote)
+        }
+        btnReStyle.performClick()
 
         btnShare.setOnClickListener {
             val iShare = Intent(Intent.ACTION_SEND)
@@ -38,9 +46,8 @@ class FavoritesActivity : AppCompatActivity() {
             iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
             startActivity(Intent.createChooser(iShare, "Share quote via"))
         }
+
         if (!favQuotes.isNullOrEmpty()) {
-            val ivLeft: ImageView = findViewById(R.id.im_quote_left)
-            val ivRight: ImageView = findViewById(R.id.im_quote_right)
             val btnFav: ImageView = findViewById(R.id.im_quote_like)
 
             var curr = 0
@@ -52,35 +59,39 @@ class FavoritesActivity : AppCompatActivity() {
 
             tvQuote.text = quotes?.get(curIndex)
 
-            if (favQuotes.size > 1) {
-                ivLeft.visibility = View.VISIBLE
-                ivRight.visibility = View.VISIBLE
-            }
 
-            ivRight.setOnClickListener {
-                if (++curr >= favQuotes.size) curr = 0
-                curIndex = favQuotes[curr].toInt()
-                tvQuote.text = quotes?.get(curIndex)
-                if (favL != null && !favL!!.contains(curIndex.toString())) {
-                    btnFav.setImageResource(unLike)
-                    btnFav.tag = "unlike"
-                } else {
-                    btnFav.setImageResource(liked)
-                    btnFav.tag = "like"
+            if (favQuotes.size > 1) cv.setOnTouchListener(object : OnSwipeTouchListener(this@FavoritesActivity) {
+                override fun onSwipeLeft() {
+                    if (--curr < 0) curr = favQuotes.size - 1
+                    curIndex = favQuotes[curr].toInt()
+                    if (favL != null && !favL!!.contains(curIndex.toString())) {
+                        btnFav.setImageResource(unLike)
+                        btnFav.tag = "unlike"
+                    } else {
+                        btnFav.setImageResource(liked)
+                        btnFav.tag = "like"
+                    }
+                    tvQuote.text = quotes?.get(curIndex)
                 }
-            }
-            ivLeft.setOnClickListener {
-                if (--curr < 0) curr = favQuotes.size - 1
-                curIndex = favQuotes[curr].toInt()
-                if (favL != null && !favL!!.contains(curIndex.toString())) {
-                    btnFav.setImageResource(unLike)
-                    btnFav.tag = "unlike"
-                } else {
-                    btnFav.setImageResource(liked)
-                    btnFav.tag = "like"
+
+                override fun onSwipeRight() {
+                    if (++curr >= favQuotes.size) curr = 0
+                    curIndex = favQuotes[curr].toInt()
+                    tvQuote.text = quotes?.get(curIndex)
+                    if (favL != null && !favL!!.contains(curIndex.toString())) {
+                        btnFav.setImageResource(unLike)
+                        btnFav.tag = "unlike"
+                    } else {
+                        btnFav.setImageResource(liked)
+                        btnFav.tag = "like"
+                    }
+
                 }
-                tvQuote.text = quotes?.get(curIndex)
-            }
+
+                override fun onSwipe() {
+                    btnReStyle.performClick()
+                }
+            })
 
             if (favQuotes.contains(curIndex.toString())) {
                 btnFav.setImageResource(liked)

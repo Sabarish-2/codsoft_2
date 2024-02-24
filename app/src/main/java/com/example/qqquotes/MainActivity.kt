@@ -1,8 +1,10 @@
 package com.example.qqquotes
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Menu
@@ -12,7 +14,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import kotlin.properties.Delegates
+import androidx.constraintlayout.widget.ConstraintLayout
 
 class MainActivity : AppCompatActivity() {
 
@@ -303,11 +305,12 @@ class MainActivity : AppCompatActivity() {
         "I'm not late, everyone else is just early.",
         "I'm not random, I just have many thoughts."
     )
-    private var quoteNum by Delegates.notNull<Int>()
+    private var quoteNum: Int? = null
     private lateinit var toolBar: androidx.appcompat.widget.Toolbar
     private val liked = R.drawable.ic_heart_black_24dp
     private val unLike = R.drawable.ic_heart_outline_24dp
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -316,22 +319,18 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolBar)
         supportActionBar?.title = "Quick Quality QuoteS App"
 
+        val cv: ConstraintLayout = findViewById(R.id.cv)
         val tvQuote: TextView = findViewById(R.id.tv_quote)
-        val btnRefresh: ImageView = findViewById(R.id.im_quote_refresh)
+        val btnReStyle: ImageView = findViewById(R.id.im_quote_restyle)
         val btnFav: ImageView = findViewById(R.id.im_quote_like)
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
 
         val pref = getSharedPreferences("favQ", Context.MODE_PRIVATE)
         var favL: MutableSet<String>? = pref.getStringSet("favI", null)
-
-
-        tvQuote.text = getRandom()
-        randomStyles(tvQuote)
-        btnRefresh.visibility = View.VISIBLE
-        btnRefresh.setOnClickListener {
+        if (favL == null) tvQuote.text = getString(R.string.swipe_gesture)
+        else {
             tvQuote.text = getRandom()
-            favL = pref.getStringSet("favI", null)
-            if (favL?.contains(quoteNum.toString()) == true) {
+            if (favL.contains(quoteNum.toString())) {
                 btnFav.setImageResource(liked)
                 btnFav.tag = "like"
             } else {
@@ -341,6 +340,26 @@ class MainActivity : AppCompatActivity() {
             randomStyles(tvQuote)
         }
 
+        cv.setOnTouchListener(object : OnSwipeTouchListener(this@MainActivity) {
+            override fun onSwipe() {
+                tvQuote.text = getRandom()
+                if (favL?.contains(quoteNum.toString()) == true) {
+                    btnFav.setImageResource(liked)
+                    btnFav.tag = "like"
+                } else {
+                    btnFav.setImageResource(unLike)
+                    btnFav.tag = "unlike"
+                }
+                randomStyles(tvQuote)
+                btnReStyle.performClick()
+            }
+        })
+
+        btnFav.visibility = View.VISIBLE
+        btnReStyle.setOnClickListener {
+            cv.setBackgroundColor(generateRandomColor())
+            randomStyles(tvQuote)
+        }
         btnShare.setOnClickListener {
             val iShare = Intent(Intent.ACTION_SEND)
             iShare.setType("text/plain")
@@ -348,8 +367,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent.createChooser(iShare, "Share quote via"))
         }
 
-        if (favL != null && favL!!.contains(quoteNum.toString())) btnFav.setImageResource(liked)
-        btnFav.visibility = View.VISIBLE
+        if ((favL != null) && favL.contains(quoteNum.toString())) btnFav.setImageResource(liked)
         btnFav.setOnClickListener {
             if (btnFav.tag == "like") {
                 btnFav.setImageResource(unLike)
@@ -361,20 +379,16 @@ class MainActivity : AppCompatActivity() {
                 editor.putStringSet("favI", setL)
                 editor.apply()
             } else {
+                if (quoteNum == null) return@setOnClickListener
                 btnFav.setImageResource(liked)
                 btnFav.tag = "like"
-                favL = pref.getStringSet("favI", null)
-                if (favL != null) {
-                    favL!!.add(quoteNum.toString())
-                } else {
-                    favL = mutableSetOf(quoteNum.toString())
-                }
+                favL = pref.getStringSet("favI", mutableSetOf())
+                favL!!.add(quoteNum.toString())
                 val editor = pref.edit()
                 editor.putStringSet("favI", favL)
                 editor.apply()
             }
         }
-
 
         val onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -398,25 +412,9 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun randomStyles(tvQuote: TextView) {
-        val rI = Math.random() < 0.3
-        val rB = Math.random() > 0.3
-        val rBI = Math.random() < 0.2
-        val rCAPS = Math.random() > 0.3 && Math.random() < 0.6
-
-        tvQuote.isAllCaps = rCAPS
-        when {
-            rI -> tvQuote.setTypeface(null, Typeface.ITALIC)
-
-            rBI -> tvQuote.setTypeface(null, Typeface.BOLD_ITALIC)
-
-            rB -> tvQuote.setTypeface(null, Typeface.BOLD)
-        }
-    }
-
     private fun getRandom(): String {
         quoteNum = (0 until quotes.size).random()
-        return quotes[quoteNum]
+        return quotes[quoteNum!!]
     }
 
     override fun onResume() {
@@ -447,5 +445,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+    companion object {
+
+        fun randomStyles(tvQuote: TextView) {
+            val rI = Math.random() < 0.3
+            val rB = Math.random() > 0.3
+            val rBI = Math.random() < 0.2
+            val rCAPS = Math.random() > 0.3 && Math.random() < 0.6
+
+            tvQuote.isAllCaps = rCAPS
+            when {
+                rI -> tvQuote.setTypeface(null, Typeface.ITALIC)
+
+                rBI -> tvQuote.setTypeface(null, Typeface.BOLD_ITALIC)
+
+                rB -> tvQuote.setTypeface(null, Typeface.BOLD)
+            }
+        }
+
+        fun generateRandomColor(): Int {
+            val alpha = 75
+
+            // Generate random RGB color
+            val r = (0..255).random()
+            val g = (0..255).random()
+            val b = (0..255).random()
+
+            // Combine alpha and RGB values to create the color
+            return Color.argb(alpha, r, g, b)
+        }
     }
 }

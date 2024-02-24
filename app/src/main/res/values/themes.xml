@@ -6,7 +6,7 @@
     </style>
 
     <style name="TOOLBAR">
-        <item name="android:background">#9F90F2FF</item>
+        <item name="android:background">#03E2FF</item>
     </style>
 
     <style name="Theme.QQQuoteS" parent="Base.Theme.QQQuoteS" />

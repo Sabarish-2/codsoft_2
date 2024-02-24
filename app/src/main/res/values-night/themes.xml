@@ -6,6 +6,6 @@
     </style>
 
     <style name="TOOLBAR">
-        <item name="android:background">#371A53FF</item>
+        <item name="android:background">#390000FF</item>
     </style>
 </resources>
