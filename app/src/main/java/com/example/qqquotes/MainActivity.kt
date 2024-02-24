@@ -322,6 +322,7 @@ class MainActivity : AppCompatActivity() {
         val cv: ConstraintLayout = findViewById(R.id.cv)
         val tvQuote: TextView = findViewById(R.id.tv_quote)
         val btnReStyle: ImageView = findViewById(R.id.im_quote_restyle)
+        val btnReColor: ImageView = findViewById(R.id.im_quote_recolor)
         val btnFav: ImageView = findViewById(R.id.im_quote_like)
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
 
@@ -337,7 +338,8 @@ class MainActivity : AppCompatActivity() {
                 btnFav.setImageResource(unLike)
                 btnFav.tag = "unlike"
             }
-            randomStyles(tvQuote)
+            btnReStyle.performClick()
+            btnReColor.performClick()
         }
 
         cv.setOnTouchListener(object : OnSwipeTouchListener(this@MainActivity) {
@@ -350,15 +352,17 @@ class MainActivity : AppCompatActivity() {
                     btnFav.setImageResource(unLike)
                     btnFav.tag = "unlike"
                 }
-                randomStyles(tvQuote)
+                btnReColor.performClick()
                 btnReStyle.performClick()
             }
         })
 
         btnFav.visibility = View.VISIBLE
         btnReStyle.setOnClickListener {
-            cv.setBackgroundColor(generateRandomColor())
             randomStyles(tvQuote)
+        }
+        btnReColor.setOnClickListener{
+            cv.setBackgroundColor(generateRandomColor())
         }
         btnShare.setOnClickListener {
             val iShare = Intent(Intent.ACTION_SEND)
@@ -366,6 +370,7 @@ class MainActivity : AppCompatActivity() {
             iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
             startActivity(Intent.createChooser(iShare, "Share quote via"))
         }
+
 
         if ((favL != null) && favL.contains(quoteNum.toString())) btnFav.setImageResource(liked)
         btnFav.setOnClickListener {
@@ -449,18 +454,16 @@ class MainActivity : AppCompatActivity() {
     companion object {
 
         fun randomStyles(tvQuote: TextView) {
-            val rI = Math.random() < 0.3
-            val rB = Math.random() > 0.3
-            val rBI = Math.random() < 0.2
+            var num: Int = tvQuote.typeface.style
+            if ((++num) == 4) num = 1
+
             val rCAPS = Math.random() > 0.3 && Math.random() < 0.6
 
             tvQuote.isAllCaps = rCAPS
-            when {
-                rI -> tvQuote.setTypeface(null, Typeface.ITALIC)
-
-                rBI -> tvQuote.setTypeface(null, Typeface.BOLD_ITALIC)
-
-                rB -> tvQuote.setTypeface(null, Typeface.BOLD)
+            when (num){
+                1 -> tvQuote.setTypeface(null, Typeface.BOLD)
+                2 -> tvQuote.setTypeface(null, Typeface.ITALIC)
+                3 -> tvQuote.setTypeface(null, Typeface.BOLD_ITALIC)
             }
         }
 

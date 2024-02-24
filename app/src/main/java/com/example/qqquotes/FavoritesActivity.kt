@@ -33,20 +33,22 @@ class FavoritesActivity : AppCompatActivity() {
         val tvQuote: TextView = findViewById(R.id.tv_quote)
         val cv: ConstraintLayout = findViewById(R.id.cv)
         val btnReStyle: ImageView = findViewById(R.id.im_quote_restyle)
+        val btnReColor: ImageView = findViewById(R.id.im_quote_recolor)
 
         btnReStyle.setOnClickListener {
-            cv.setBackgroundColor(MainActivity.generateRandomColor())
             MainActivity.randomStyles(tvQuote)
         }
+        btnReColor.setOnClickListener{
+            cv.setBackgroundColor(MainActivity.generateRandomColor())
+        }
         btnReStyle.performClick()
-
+        btnReColor.performClick()
         btnShare.setOnClickListener {
             val iShare = Intent(Intent.ACTION_SEND)
             iShare.setType("text/plain")
             iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
             startActivity(Intent.createChooser(iShare, "Share quote via"))
         }
-
         if (!favQuotes.isNullOrEmpty()) {
             val btnFav: ImageView = findViewById(R.id.im_quote_like)
 
@@ -90,6 +92,7 @@ class FavoritesActivity : AppCompatActivity() {
 
                 override fun onSwipe() {
                     btnReStyle.performClick()
+                    btnReColor.performClick()
                 }
             })
 
