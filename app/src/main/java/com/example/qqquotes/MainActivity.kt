@@ -19,7 +19,6 @@ import android.view.ViewTreeObserver
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -333,6 +332,7 @@ class MainActivity : AppCompatActivity() {
         val btnReStyle: ImageView = findViewById(R.id.im_quote_restyle)
         val btnReColor: ImageView = findViewById(R.id.im_quote_recolor)
         val btnFav: ImageView = findViewById(R.id.im_quote_like)
+        val btnShareImg: ImageView = findViewById(R.id.im_quote_share_img)
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
 
         val pref = getSharedPreferences("favQ", Context.MODE_PRIVATE)
@@ -370,10 +370,11 @@ class MainActivity : AppCompatActivity() {
         btnFav.visibility = View.VISIBLE
         btnReStyle.setOnClickListener { randomStyles(tvQuote) }
         btnReColor.setOnClickListener { cv.setBackgroundColor(generateRandomColor()) }
-        btnShare.setOnClickListener {
+        btnShareImg.setOnClickListener {
             // Hide buttons
             btnFav.visibility = View.GONE
             btnShare.visibility = View.GONE
+            btnShareImg.visibility = View.GONE
             btnReStyle.visibility = View.GONE
             btnReColor.visibility = View.GONE
 
@@ -387,17 +388,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Listen for layout changes
-            ll.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            ll.viewTreeObserver.addOnGlobalLayoutListener(object :
+                ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
                     // Ensure we remove the layout listener to prevent it from being called multiple times
                     ll.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
                     // Capture the bitmap after layout changes
-                    val bitmap = Bitmap.createBitmap(
-                        ll.width,
-                        ll.height,
-                        Bitmap.Config.ARGB_8888
-                    )
+                    val bitmap = Bitmap.createBitmap(ll.width, ll.height, Bitmap.Config.ARGB_8888)
                     val canvas = Canvas(bitmap)
                     ll.draw(canvas)
                     val bytes = ByteArrayOutputStream()
@@ -409,7 +407,9 @@ class MainActivity : AppCompatActivity() {
                         put(MediaStore.Images.Media.DISPLAY_NAME, "Title")
                         put(MediaStore.Images.Media.MIME_TYPE, "image/png")
                     }
-                    val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                    val uri = contentResolver.insert(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues
+                    )
                     uri?.let {
                         contentResolver.openOutputStream(it)?.use { outputStream ->
                             outputStream.write(bytes.toByteArray())
@@ -432,6 +432,7 @@ class MainActivity : AppCompatActivity() {
 
                     // Restore buttons visibility
                     btnShare.visibility = View.VISIBLE
+                    btnShareImg.visibility = View.VISIBLE
                     btnFav.visibility = View.VISIBLE
                     btnReStyle.visibility = View.VISIBLE
                     btnReColor.visibility = View.VISIBLE
@@ -440,6 +441,12 @@ class MainActivity : AppCompatActivity() {
 
             // Request a layout pass to ensure that layout changes take effect
             ll.requestLayout()
+        }
+        btnShare.setOnClickListener {
+            val iShare = Intent(Intent.ACTION_SEND)
+            iShare.setType("text/plain")
+            iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
+            startActivity(Intent.createChooser(iShare, "Share quote via"))
         }
 
 
@@ -452,8 +459,7 @@ class MainActivity : AppCompatActivity() {
                 favL?.remove(quoteNum.toString())
                 val editor = pref.edit()
                 editor.putStringSet("favI", favL)
-                if (!editor.commit()) Toast.makeText(this, "SP is the THIEF!", Toast.LENGTH_SHORT)
-                    .show()
+                editor.apply()
             } else {
                 if (quoteNum == null) return@setOnClickListener
                 btnFav.setImageResource(liked)
@@ -462,8 +468,7 @@ class MainActivity : AppCompatActivity() {
                 favL!!.add(quoteNum.toString())
                 val editor = pref.edit()
                 editor.putStringSet("favI", favL)
-                if (!editor.commit()) Toast.makeText(this, "SP is the THIEF!", Toast.LENGTH_SHORT)
-                    .show()
+                editor.apply()
             }
         }
 
@@ -552,40 +557,5 @@ class MainActivity : AppCompatActivity() {
             return Color.argb(alpha, r, g, b)
         }
 
-        // Function to recursively set layout parameters to WRAP_CONTENT
-//        fun setLayoutParamsToWrapContent(view: View) {
-//            val layoutParams = view.layoutParams
-//            if (layoutParams != null) {
-//                view.tag = layoutParams // Store original layout params in view's tag
-//                layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
-//                layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-//                view.layoutParams = layoutParams
-//            }
-//
-//            if (view is ViewGroup) {
-//                for (i in 0 until view.childCount) {
-//                    val child = view.getChildAt(i)
-//                    setLayoutParamsToWrapContent(child)
-//                }
-//            }
-//        }
-
-        // Function to recursively set layout parameters back to original values
-//        fun setLayoutParamsToOriginal(view: View) {
-//            val layoutParams = view.layoutParams
-//            if (layoutParams != null) {
-//                if (view.tag != null) {
-//                    val originalLayoutParams = view.tag as ViewGroup.LayoutParams
-//                    view.layoutParams = originalLayoutParams
-//                }
-//            }
-//
-//            if (view is ViewGroup) {
-//                for (i in 0 until view.childCount) {
-//                    val child = view.getChildAt(i)
-//                    setLayoutParamsToOriginal(child)
-//                }
-//            }
-//        }
     }
 }

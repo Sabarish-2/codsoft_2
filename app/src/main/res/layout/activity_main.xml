@@ -68,6 +68,7 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent" />
 
+
                 <ImageView
                     android:id="@+id/im_quote_share"
                     android:layout_width="wrap_content"
@@ -79,6 +80,27 @@
                     android:src="@drawable/baseline_share_24"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/im_quote_share_img"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:contentDescription="@string/icon_to_share_a_quote"
+                    android:padding="10dp"
+                    android:src="@drawable/baseline_share_24"
+                    app:layout_constraintEnd_toStartOf="@id/im_quote_share"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/icon_to_share_a_quote"
+                    android:padding="2dp"
+                    android:src="@drawable/baseline_image_24"
+                    app:layout_constraintBottom_toBottomOf="@+id/im_quote_share_img"
+                    app:layout_constraintEnd_toEndOf="@+id/im_quote_share_img" />
 
                 <ImageView
                     android:id="@+id/im_quote_recolor"
