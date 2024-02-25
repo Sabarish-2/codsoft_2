@@ -2,19 +2,28 @@ package com.example.qqquotes
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import java.io.ByteArrayOutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -327,7 +336,7 @@ class MainActivity : AppCompatActivity() {
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
 
         val pref = getSharedPreferences("favQ", Context.MODE_PRIVATE)
-        var favL: MutableSet<String>? = pref.getStringSet("favI", null)
+        var favL = pref.getStringSet("favI", null)?.toMutableSet()
         if (favL == null) tvQuote.text = getString(R.string.swipe_gesture)
         else {
             tvQuote.text = getRandom()
@@ -353,22 +362,84 @@ class MainActivity : AppCompatActivity() {
                     btnFav.tag = "unlike"
                 }
                 btnReColor.performClick()
-                btnReStyle.performClick()
+                val s = (0..3).random()
+                for (i in 0..s) btnReStyle.performClick()
             }
         })
 
         btnFav.visibility = View.VISIBLE
-        btnReStyle.setOnClickListener {
-            randomStyles(tvQuote)
-        }
-        btnReColor.setOnClickListener{
-            cv.setBackgroundColor(generateRandomColor())
-        }
+        btnReStyle.setOnClickListener { randomStyles(tvQuote) }
+        btnReColor.setOnClickListener { cv.setBackgroundColor(generateRandomColor()) }
         btnShare.setOnClickListener {
-            val iShare = Intent(Intent.ACTION_SEND)
-            iShare.setType("text/plain")
-            iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
-            startActivity(Intent.createChooser(iShare, "Share quote via"))
+            // Hide buttons
+            btnFav.visibility = View.GONE
+            btnShare.visibility = View.GONE
+            btnReStyle.visibility = View.GONE
+            btnReColor.visibility = View.GONE
+
+            val ll: LinearLayout = findViewById(R.id.ll)
+            val layoutParams = ll.layoutParams
+
+            // Change layout parameters to WRAP_CONTENT
+            layoutParams?.let {
+                it.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                ll.layoutParams = it
+            }
+
+            // Listen for layout changes
+            ll.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    // Ensure we remove the layout listener to prevent it from being called multiple times
+                    ll.viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+                    // Capture the bitmap after layout changes
+                    val bitmap = Bitmap.createBitmap(
+                        ll.width,
+                        ll.height,
+                        Bitmap.Config.ARGB_8888
+                    )
+                    val canvas = Canvas(bitmap)
+                    ll.draw(canvas)
+                    val bytes = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes)
+
+                    // Save the bitmap to a file
+                    val contentResolver = applicationContext.contentResolver
+                    val contentValues = ContentValues().apply {
+                        put(MediaStore.Images.Media.DISPLAY_NAME, "Title")
+                        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                    }
+                    val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                    uri?.let {
+                        contentResolver.openOutputStream(it)?.use { outputStream ->
+                            outputStream.write(bytes.toByteArray())
+                        }
+                    }
+
+                    // Share the bitmap using Intent.ACTION_SEND
+                    val shareIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        type = "image/png"
+                    }
+                    startActivity(Intent.createChooser(shareIntent, "Share Quote as Image"))
+
+                    // Restore original layout params (MATCH_PARENT)
+                    layoutParams?.let {
+                        it.height = ViewGroup.LayoutParams.MATCH_PARENT
+                        ll.layoutParams = it
+                    }
+
+                    // Restore buttons visibility
+                    btnShare.visibility = View.VISIBLE
+                    btnFav.visibility = View.VISIBLE
+                    btnReStyle.visibility = View.VISIBLE
+                    btnReColor.visibility = View.VISIBLE
+                }
+            })
+
+            // Request a layout pass to ensure that layout changes take effect
+            ll.requestLayout()
         }
 
 
@@ -377,12 +448,12 @@ class MainActivity : AppCompatActivity() {
             if (btnFav.tag == "like") {
                 btnFav.setImageResource(unLike)
                 btnFav.tag = "unlike"
-                favL = pref.getStringSet("favI", null)
-                val setL = favL?.toMutableSet()
-                setL?.remove(quoteNum.toString())
+                favL = pref.getStringSet("favI", null)?.toMutableSet()
+                favL?.remove(quoteNum.toString())
                 val editor = pref.edit()
-                editor.putStringSet("favI", setL)
-                editor.apply()
+                editor.putStringSet("favI", favL)
+                if (!editor.commit()) Toast.makeText(this, "SP is the THIEF!", Toast.LENGTH_SHORT)
+                    .show()
             } else {
                 if (quoteNum == null) return@setOnClickListener
                 btnFav.setImageResource(liked)
@@ -391,7 +462,8 @@ class MainActivity : AppCompatActivity() {
                 favL!!.add(quoteNum.toString())
                 val editor = pref.edit()
                 editor.putStringSet("favI", favL)
-                editor.apply()
+                if (!editor.commit()) Toast.makeText(this, "SP is the THIEF!", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
 
@@ -451,6 +523,7 @@ class MainActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+
     companion object {
 
         fun randomStyles(tvQuote: TextView) {
@@ -460,7 +533,7 @@ class MainActivity : AppCompatActivity() {
             val rCAPS = Math.random() > 0.3 && Math.random() < 0.6
 
             tvQuote.isAllCaps = rCAPS
-            when (num){
+            when (num) {
                 1 -> tvQuote.setTypeface(null, Typeface.BOLD)
                 2 -> tvQuote.setTypeface(null, Typeface.ITALIC)
                 3 -> tvQuote.setTypeface(null, Typeface.BOLD_ITALIC)
@@ -478,5 +551,41 @@ class MainActivity : AppCompatActivity() {
             // Combine alpha and RGB values to create the color
             return Color.argb(alpha, r, g, b)
         }
+
+        // Function to recursively set layout parameters to WRAP_CONTENT
+//        fun setLayoutParamsToWrapContent(view: View) {
+//            val layoutParams = view.layoutParams
+//            if (layoutParams != null) {
+//                view.tag = layoutParams // Store original layout params in view's tag
+//                layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+//                layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+//                view.layoutParams = layoutParams
+//            }
+//
+//            if (view is ViewGroup) {
+//                for (i in 0 until view.childCount) {
+//                    val child = view.getChildAt(i)
+//                    setLayoutParamsToWrapContent(child)
+//                }
+//            }
+//        }
+
+        // Function to recursively set layout parameters back to original values
+//        fun setLayoutParamsToOriginal(view: View) {
+//            val layoutParams = view.layoutParams
+//            if (layoutParams != null) {
+//                if (view.tag != null) {
+//                    val originalLayoutParams = view.tag as ViewGroup.LayoutParams
+//                    view.layoutParams = originalLayoutParams
+//                }
+//            }
+//
+//            if (view is ViewGroup) {
+//                for (i in 0 until view.childCount) {
+//                    val child = view.getChildAt(i)
+//                    setLayoutParamsToOriginal(child)
+//                }
+//            }
+//        }
     }
 }

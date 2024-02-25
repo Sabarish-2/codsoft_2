@@ -1,6 +1,7 @@
 package com.example.qqquotes
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -8,6 +9,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 
@@ -27,20 +29,18 @@ class FavoritesActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val quotes: java.util.ArrayList<String>? = intent.getStringArrayListExtra("Quotes")
-        val pref: SharedPreferences = getSharedPreferences("favQ", MODE_PRIVATE)
+
+        val pref: SharedPreferences = getSharedPreferences("favQ", Context.MODE_PRIVATE)
         val favQuotes = pref.getStringSet("favI", null)?.toMutableList()
+
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
         val tvQuote: TextView = findViewById(R.id.tv_quote)
         val cv: ConstraintLayout = findViewById(R.id.cv)
         val btnReStyle: ImageView = findViewById(R.id.im_quote_restyle)
         val btnReColor: ImageView = findViewById(R.id.im_quote_recolor)
 
-        btnReStyle.setOnClickListener {
-            MainActivity.randomStyles(tvQuote)
-        }
-        btnReColor.setOnClickListener{
-            cv.setBackgroundColor(MainActivity.generateRandomColor())
-        }
+        btnReStyle.setOnClickListener { MainActivity.randomStyles(tvQuote) }
+        btnReColor.setOnClickListener{ cv.setBackgroundColor(MainActivity.generateRandomColor()) }
         btnReStyle.performClick()
         btnReColor.performClick()
         btnShare.setOnClickListener {
@@ -60,7 +60,6 @@ class FavoritesActivity : AppCompatActivity() {
             var favL: MutableSet<String>? = null
 
             tvQuote.text = quotes?.get(curIndex)
-
 
             if (favQuotes.size > 1) cv.setOnTouchListener(object : OnSwipeTouchListener(this@FavoritesActivity) {
                 override fun onSwipeLeft() {
@@ -105,24 +104,23 @@ class FavoritesActivity : AppCompatActivity() {
                 if (btnFav.tag == "like") {
                     btnFav.setImageResource(unLike)
                     btnFav.tag = "unlike"
-                    favL = pref.getStringSet("favI", null)
-                    val setL = favL?.toMutableSet()
-                    setL?.remove(curIndex.toString())
+                    favL = pref.getStringSet("favI", null)?.toMutableSet()
+                    favL?.remove(curIndex.toString())
                     val editor = pref.edit()
-                    editor.putStringSet("favI", setL)
-                    editor.apply()
+                    editor.putStringSet("favI", favL)
+                    if (!editor.commit()) Toast.makeText(this, "SP is the THIEF!", Toast.LENGTH_SHORT).show()
                 } else {
                     btnFav.setImageResource(liked)
                     btnFav.tag = "like"
-                    favL = pref.getStringSet("favI", null)
-                    if (favL != null) {
-                        favL!!.add(curIndex.toString())
-                    } else {
-                        favL = mutableSetOf(curIndex.toString())
-                    }
+                    favL = pref.getStringSet("favI", mutableSetOf())
+//                    if (favL != null) {
+                    favL!!.add(curIndex.toString())
+//                    } else {
+//                        favL = mutableSetOf(curIndex.toString())
+//                    }
                     val editor = pref.edit()
                     editor.putStringSet("favI", favL)
-                    editor.apply()
+                    if (!editor.commit()) Toast.makeText(this, "SP is the THIEF!", Toast.LENGTH_SHORT).show()
                 }
                 favL = pref.getStringSet("favI", null)
             }

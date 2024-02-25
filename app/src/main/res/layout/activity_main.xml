@@ -18,6 +18,7 @@
     </androidx.appcompat.widget.Toolbar>
 
     <LinearLayout
+        android:id="@+id/ll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#9E9E9E"
@@ -27,7 +28,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_margin="22dp"
-            app:cardBackgroundColor="#FFFFFF"
             app:cardCornerRadius="22dp"
             app:cardElevation="15dp">
 
