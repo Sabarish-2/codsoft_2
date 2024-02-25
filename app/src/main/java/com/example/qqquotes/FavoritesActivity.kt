@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Bundle
@@ -37,8 +36,10 @@ class FavoritesActivity : AppCompatActivity() {
 
         val quotes: java.util.ArrayList<String>? = intent.getStringArrayListExtra("Quotes")
 
-        val pref: SharedPreferences = getSharedPreferences("favQ", Context.MODE_PRIVATE)
-        val favQuotes = pref.getStringSet("favI", null)?.toMutableList()
+//        Getting from shared preferences
+        val sp = getSharedPreferences("Fav", Context.MODE_PRIVATE)
+//        Favourite list - local copy - with all quotes
+        val fav = sp.getStringSet("fav", null)?.toMutableList()
 
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
         val btnShareImg: ImageView = findViewById(R.id.im_quote_share_img)
@@ -117,7 +118,7 @@ class FavoritesActivity : AppCompatActivity() {
                     btnReStyle.visibility = View.VISIBLE
                     btnReColor.visibility = View.VISIBLE
                     btnShareImg.visibility = View.VISIBLE
-                    if (!favQuotes.isNullOrEmpty()) btnFav.visibility = View.VISIBLE
+                    if (!fav.isNullOrEmpty()) btnFav.visibility = View.VISIBLE
                 }
             })
 
@@ -130,22 +131,23 @@ class FavoritesActivity : AppCompatActivity() {
             iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
             startActivity(Intent.createChooser(iShare, "Share quote via"))
         }
-        if (!favQuotes.isNullOrEmpty()) {
-
+        if (!fav.isNullOrEmpty()) {
             var curr = 0
-            var curIndex = favQuotes[curr].toInt()
+            var curIndex = fav[curr].toInt()
 
             val liked = R.drawable.ic_heart_black_24dp
             val unLike = R.drawable.ic_heart_outline_24dp
-            var favL: MutableSet<String>? = null
+
+//            Favourite list in Shared preference to check if it is favourite or not
+            var favL: MutableList<String>? = fav
 
             tvQuote.text = quotes?.get(curIndex)
 
-            if (favQuotes.size > 1) cv.setOnTouchListener(object :
+            if (fav.size > 1) cv.setOnTouchListener(object :
                 OnSwipeTouchListener(this@FavoritesActivity) {
                 override fun onSwipeLeft() {
-                    if (--curr < 0) curr = favQuotes.size - 1
-                    curIndex = favQuotes[curr].toInt()
+                    if (--curr < 0) curr = fav.size - 1
+                    curIndex = fav[curr].toInt()
                     if (favL != null && !favL!!.contains(curIndex.toString())) {
                         btnFav.setImageResource(unLike)
                         btnFav.tag = "unlike"
@@ -157,8 +159,8 @@ class FavoritesActivity : AppCompatActivity() {
                 }
 
                 override fun onSwipeRight() {
-                    if (++curr >= favQuotes.size) curr = 0
-                    curIndex = favQuotes[curr].toInt()
+                    if (++curr >= fav.size) curr = 0
+                    curIndex = fav[curr].toInt()
                     tvQuote.text = quotes?.get(curIndex)
                     if (favL != null && !favL!!.contains(curIndex.toString())) {
                         btnFav.setImageResource(unLike)
@@ -167,7 +169,6 @@ class FavoritesActivity : AppCompatActivity() {
                         btnFav.setImageResource(liked)
                         btnFav.tag = "like"
                     }
-
                 }
 
                 override fun onSwipe() {
@@ -176,7 +177,7 @@ class FavoritesActivity : AppCompatActivity() {
                 }
             })
 
-            if (favQuotes.contains(curIndex.toString())) {
+            if (fav.contains(curIndex.toString())) {
                 btnFav.setImageResource(liked)
                 btnFav.tag = "like"
             }
@@ -185,25 +186,26 @@ class FavoritesActivity : AppCompatActivity() {
                 if (btnFav.tag == "like") {
                     btnFav.setImageResource(unLike)
                     btnFav.tag = "unlike"
-                    favL = pref.getStringSet("favI", null)?.toMutableSet()
-                    favL?.remove(curIndex.toString())
-                    val editor = pref.edit()
-                    editor.putStringSet("favI", favL)
-                    editor.apply()
+                    val favQ = sp.getStringSet("fav", null)?.toMutableSet()
+                    favQ?.remove(curIndex.toString())
+                    val editor = sp.edit()
+                    editor.apply {
+                        putStringSet("fav", favQ)
+                        apply()
+                    }
                 } else {
                     btnFav.setImageResource(liked)
                     btnFav.tag = "like"
-                    favL = pref.getStringSet("favI", mutableSetOf())
-//                    if (favL != null) {
-                    favL!!.add(curIndex.toString())
-//                    } else {
-//                        favL = mutableSetOf(curIndex.toString())
-//                    }
-                    val editor = pref.edit()
-                    editor.putStringSet("favI", favL)
-                    editor.apply()
+                    val favQ = sp.getStringSet("fav", null)?.toMutableSet()
+                    favQ?.add(curIndex.toString())
+                    val editor = sp.edit()
+                    editor.apply {
+                        putStringSet("fav", favQ)
+                        apply()
+                    }
                 }
-                favL = pref.getStringSet("favI", null)
+//                Updating shared preference list copy to check if it is favourite or not.
+                favL = sp.getStringSet("fav", null)?.toMutableList()
             }
         }
     }

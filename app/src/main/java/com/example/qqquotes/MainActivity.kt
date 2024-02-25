@@ -335,12 +335,13 @@ class MainActivity : AppCompatActivity() {
         val btnShareImg: ImageView = findViewById(R.id.im_quote_share_img)
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
 
-        val pref = getSharedPreferences("favQ", Context.MODE_PRIVATE)
-        var favL = pref.getStringSet("favI", null)?.toMutableSet()
-        if (favL == null) tvQuote.text = getString(R.string.swipe_gesture)
+        val sp = getSharedPreferences("Fav", Context.MODE_PRIVATE)
+//        val editor = sp.edit()
+        var fav = sp.getStringSet("fav", null)
+        if (fav == null) tvQuote.text = getString(R.string.swipe_gesture)
         else {
             tvQuote.text = getRandom()
-            if (favL.contains(quoteNum.toString())) {
+            if (fav.contains(quoteNum.toString())) {
                 btnFav.setImageResource(liked)
                 btnFav.tag = "like"
             } else {
@@ -354,7 +355,7 @@ class MainActivity : AppCompatActivity() {
         cv.setOnTouchListener(object : OnSwipeTouchListener(this@MainActivity) {
             override fun onSwipe() {
                 tvQuote.text = getRandom()
-                if (favL?.contains(quoteNum.toString()) == true) {
+                if (fav?.contains(quoteNum.toString()) == true) {
                     btnFav.setImageResource(liked)
                     btnFav.tag = "like"
                 } else {
@@ -366,6 +367,7 @@ class MainActivity : AppCompatActivity() {
                 for (i in 0..s) btnReStyle.performClick()
             }
         })
+
 
         btnFav.visibility = View.VISIBLE
         btnReStyle.setOnClickListener { randomStyles(tvQuote) }
@@ -450,26 +452,32 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        if ((favL != null) && favL.contains(quoteNum.toString())) btnFav.setImageResource(liked)
+        if ((fav != null) && fav.contains(quoteNum.toString())) btnFav.setImageResource(liked)
         btnFav.setOnClickListener {
             if (btnFav.tag == "like") {
                 btnFav.setImageResource(unLike)
                 btnFav.tag = "unlike"
-                favL = pref.getStringSet("favI", null)?.toMutableSet()
-                favL?.remove(quoteNum.toString())
-                val editor = pref.edit()
-                editor.putStringSet("favI", favL)
-                editor.apply()
+                val favQ = (sp.getStringSet("fav", null)?.toMutableSet())
+                favQ?.remove(quoteNum.toString())
+                val editor = sp.edit()
+                editor.apply{
+                    putStringSet("fav", favQ)
+                    apply()
+                }
             } else {
                 if (quoteNum == null) return@setOnClickListener
                 btnFav.setImageResource(liked)
                 btnFav.tag = "like"
-                favL = pref.getStringSet("favI", mutableSetOf())
-                favL!!.add(quoteNum.toString())
-                val editor = pref.edit()
-                editor.putStringSet("favI", favL)
-                editor.apply()
+                var favQ = sp.getStringSet("fav", null)?.toMutableSet()
+                if (favQ == null) favQ = mutableSetOf(quoteNum.toString())
+                else favQ.add(quoteNum.toString())
+                val editor = sp.edit()
+                editor.apply{
+                    putStringSet("fav", favQ)
+                    apply()
+                }
             }
+            fav = sp.getStringSet("fav", null)
         }
 
         val onBackPressedCallback = object : OnBackPressedCallback(true) {
@@ -500,13 +508,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
-        val pref = getSharedPreferences("favQ", Context.MODE_PRIVATE)
-        val favL = pref.getStringSet("favI", null)
+        val sp = getSharedPreferences("Fav", Context.MODE_PRIVATE)
+        val fav = sp.getStringSet("fav", null)
         val btnFav: ImageView = findViewById(R.id.im_quote_like)
-        if (favL?.contains(quoteNum.toString()) == true) {
+        if (fav?.contains(quoteNum.toString()) == true) {
             btnFav.setImageResource(liked)
             btnFav.tag = "like"
-        } else if (favL != null) {
+        } else if (fav != null) {
             btnFav.setImageResource(unLike)
             btnFav.tag = "unlike"
         }
