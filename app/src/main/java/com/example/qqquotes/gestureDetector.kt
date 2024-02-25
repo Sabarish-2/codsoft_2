@@ -30,6 +30,11 @@ open class OnSwipeTouchListener(context: Context) : View.OnTouchListener {
             return true
         }
 
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            onDoubleClick()
+            return super.onDoubleTap(e)
+        }
+
         override fun onFling(
             e1: MotionEvent?,
             e2: MotionEvent,
@@ -51,6 +56,8 @@ open class OnSwipeTouchListener(context: Context) : View.OnTouchListener {
             return false
         }
     }
+
+    open fun onDoubleClick() {}
 
 
     open fun onSwipe() {}

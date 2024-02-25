@@ -143,39 +143,48 @@ class FavoritesActivity : AppCompatActivity() {
 
             tvQuote.text = quotes?.get(curIndex)
 
-            if (fav.size > 1) cv.setOnTouchListener(object :
+            cv.setOnTouchListener(object :
                 OnSwipeTouchListener(this@FavoritesActivity) {
-                override fun onSwipeLeft() {
-                    if (--curr < 0) curr = fav.size - 1
-                    curIndex = fav[curr].toInt()
-                    if (favL != null && !favL!!.contains(curIndex.toString())) {
-                        btnFav.setImageResource(unLike)
-                        btnFav.tag = "unlike"
-                    } else {
-                        btnFav.setImageResource(liked)
-                        btnFav.tag = "like"
-                    }
-                    tvQuote.text = quotes?.get(curIndex)
-                }
-
-                override fun onSwipeRight() {
-                    if (++curr >= fav.size) curr = 0
-                    curIndex = fav[curr].toInt()
-                    tvQuote.text = quotes?.get(curIndex)
-                    if (favL != null && !favL!!.contains(curIndex.toString())) {
-                        btnFav.setImageResource(unLike)
-                        btnFav.tag = "unlike"
-                    } else {
-                        btnFav.setImageResource(liked)
-                        btnFav.tag = "like"
-                    }
-                }
-
-                override fun onSwipe() {
-                    btnReStyle.performClick()
-                    btnReColor.performClick()
+                override fun onDoubleClick() {
+                    btnFav.performClick()
                 }
             })
+            if (fav.size > 1) cv.setOnTouchListener(object :
+            OnSwipeTouchListener(this@FavoritesActivity) {
+                override fun onDoubleClick() {
+                    btnFav.performClick()
+                }
+            override fun onSwipeLeft() {
+                if (--curr < 0) curr = fav.size - 1
+                curIndex = fav[curr].toInt()
+                if (favL != null && !favL!!.contains(curIndex.toString())) {
+                    btnFav.setImageResource(unLike)
+                    btnFav.tag = "unlike"
+                } else {
+                    btnFav.setImageResource(liked)
+                    btnFav.tag = "like"
+                }
+                tvQuote.text = quotes?.get(curIndex)
+            }
+
+            override fun onSwipeRight() {
+                if (++curr >= fav.size) curr = 0
+                curIndex = fav[curr].toInt()
+                tvQuote.text = quotes?.get(curIndex)
+                if (favL != null && !favL!!.contains(curIndex.toString())) {
+                    btnFav.setImageResource(unLike)
+                    btnFav.tag = "unlike"
+                } else {
+                    btnFav.setImageResource(liked)
+                    btnFav.tag = "like"
+                }
+            }
+
+            override fun onSwipe() {
+                btnReStyle.performClick()
+                btnReColor.performClick()
+            }
+        })
 
             if (fav.contains(curIndex.toString())) {
                 btnFav.setImageResource(liked)

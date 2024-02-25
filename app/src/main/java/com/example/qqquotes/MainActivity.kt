@@ -366,6 +366,9 @@ class MainActivity : AppCompatActivity() {
                 val s = (0..3).random()
                 for (i in 0..s) btnReStyle.performClick()
             }
+            override fun onDoubleClick() {
+                btnFav.performClick()
+            }
         })
 
 
