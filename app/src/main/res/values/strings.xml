@@ -8,5 +8,5 @@
     <string name="icon_to_go_to_previous_quote">Icon to go to previous quote</string>
     <string name="icon_to_go_to_next_quote">Icon to go to next quote</string>
     <string name="favorites">Favorites</string>
-    <string name="swipe_gesture">Swipe for Quotes! \nPress Heart to favorite! \nShare any Quote by clicking on the share icon! \nChange the look with options on bottom right-side!</string>
+<!--    <string name="swipe_gesture">Swipe for Quotes! \nPress Heart to favorite! \nShare any Quote by clicking on the share icon! \nChange the look with options on bottom right-side!</string>-->
 </resources>

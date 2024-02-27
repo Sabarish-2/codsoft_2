@@ -3,7 +3,6 @@ package com.example.qqquotes
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ContentValues
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -23,10 +22,12 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import java.io.ByteArrayOutputStream
+import java.util.stream.IntStream.range
 
 class MainActivity : AppCompatActivity() {
 
     private val quotes: ArrayList<String> = arrayListOf(
+        "Swipe for Quotes! \nDouble Tap to favorite! \nShare any Quote by clicking on the share icon! \nChange the look with options on bottom right-side!",
         "Strive for progress, not perfection.",
         "Every accomplishment starts with the decision to try.",
         "Believe you can and you're halfway there.",
@@ -313,10 +314,12 @@ class MainActivity : AppCompatActivity() {
         "I'm not late, everyone else is just early.",
         "I'm not random, I just have many thoughts."
     )
-    private var quoteNum: Int? = null
+    private var quoteNum: Int = 0
     private lateinit var toolBar: androidx.appcompat.widget.Toolbar
     private val liked = R.drawable.ic_heart_black_24dp
     private val unLike = R.drawable.ic_heart_outline_24dp
+
+    private val db: QuoteDB by lazy { QuoteDB.getDB(this) }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -335,13 +338,16 @@ class MainActivity : AppCompatActivity() {
         val btnShareImg: ImageView = findViewById(R.id.im_quote_share_img)
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
 
-        val sp = getSharedPreferences("Fav", Context.MODE_PRIVATE)
-//        val editor = sp.edit()
-        var fav = sp.getStringSet("fav", null)
-        if (fav == null) tvQuote.text = getString(R.string.swipe_gesture)
+        var fav = db.quoteDao().allQuotes
+
+        if (fav.isEmpty()){
+            tvQuote.text = quotes[0]
+            for (i in range(0, quotes.size))
+                db.quoteDao().addQuote(Quote(false))
+        }
         else {
             tvQuote.text = getRandom()
-            if (fav.contains(quoteNum.toString())) {
+            if (db.quoteDao().chkFav(quoteNum)) {
                 btnFav.setImageResource(liked)
                 btnFav.tag = "like"
             } else {
@@ -355,7 +361,7 @@ class MainActivity : AppCompatActivity() {
         cv.setOnTouchListener(object : OnSwipeTouchListener(this@MainActivity) {
             override fun onSwipe() {
                 tvQuote.text = getRandom()
-                if (fav?.contains(quoteNum.toString()) == true) {
+                if (db.quoteDao().chkFav(quoteNum)) {
                     btnFav.setImageResource(liked)
                     btnFav.tag = "like"
                 } else {
@@ -366,6 +372,7 @@ class MainActivity : AppCompatActivity() {
                 val s = (0..3).random()
                 for (i in 0..s) btnReStyle.performClick()
             }
+
             override fun onDoubleClick() {
                 btnFav.performClick()
             }
@@ -409,7 +416,7 @@ class MainActivity : AppCompatActivity() {
                     // Save the bitmap to a file
                     val contentResolver = applicationContext.contentResolver
                     val contentValues = ContentValues().apply {
-                        put(MediaStore.Images.Media.DISPLAY_NAME, "Title")
+                        put(MediaStore.Images.Media.DISPLAY_NAME, "TitleMain")
                         put(MediaStore.Images.Media.MIME_TYPE, "image/png")
                     }
                     val uri = contentResolver.insert(
@@ -454,33 +461,19 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent.createChooser(iShare, "Share quote via"))
         }
 
-
-        if ((fav != null) && fav.contains(quoteNum.toString())) btnFav.setImageResource(liked)
+        if ((fav.isNotEmpty()) && db.quoteDao().chkFav(quoteNum)) btnFav.setImageResource(liked)
         btnFav.setOnClickListener {
             if (btnFav.tag == "like") {
                 btnFav.setImageResource(unLike)
                 btnFav.tag = "unlike"
-                val favQ = (sp.getStringSet("fav", null)?.toMutableSet())
-                favQ?.remove(quoteNum.toString())
-                val editor = sp.edit()
-                editor.apply{
-                    putStringSet("fav", favQ)
-                    apply()
-                }
+                db.quoteDao().favQuote(Quote(quoteNum, false))
             } else {
-                if (quoteNum == null) return@setOnClickListener
+//                if (quoteNum == 0) return@setOnClickListener
                 btnFav.setImageResource(liked)
                 btnFav.tag = "like"
-                var favQ = sp.getStringSet("fav", null)?.toMutableSet()
-                if (favQ == null) favQ = mutableSetOf(quoteNum.toString())
-                else favQ.add(quoteNum.toString())
-                val editor = sp.edit()
-                editor.apply{
-                    putStringSet("fav", favQ)
-                    apply()
-                }
+                db.quoteDao().favQuote(Quote(quoteNum, true))
             }
-            fav = sp.getStringSet("fav", null)
+            fav = db.quoteDao().allQuotes
         }
 
         val onBackPressedCallback = object : OnBackPressedCallback(true) {
@@ -507,14 +500,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun getRandom(): String {
         quoteNum = (0 until quotes.size).random()
-        return quotes[quoteNum!!]
+        return quotes[quoteNum]
     }
 
     override fun onResume() {
-        val sp = getSharedPreferences("Fav", Context.MODE_PRIVATE)
-        val fav = sp.getStringSet("fav", null)
+        val fav = db.quoteDao().allQuotes
         val btnFav: ImageView = findViewById(R.id.im_quote_like)
-        if (fav?.contains(quoteNum.toString()) == true) {
+        val chkFav: Boolean? = db.quoteDao().chkFav(quoteNum)
+        if ((fav.isNotEmpty()) && (chkFav != null && chkFav)) {
             btnFav.setImageResource(liked)
             btnFav.tag = "like"
         } else if (fav != null) {
@@ -555,7 +548,6 @@ class MainActivity : AppCompatActivity() {
                 3 -> tvQuote.setTypeface(null, Typeface.BOLD_ITALIC)
             }
         }
-
         fun generateRandomColor(): Int {
             val alpha = 75
 
@@ -567,6 +559,5 @@ class MainActivity : AppCompatActivity() {
             // Combine alpha and RGB values to create the color
             return Color.argb(alpha, r, g, b)
         }
-
     }
 }

@@ -2,7 +2,6 @@ package com.example.qqquotes
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -23,6 +22,9 @@ class FavoritesActivity : AppCompatActivity() {
 
     private lateinit var toolBar: androidx.appcompat.widget.Toolbar
 
+    private val db: QuoteDB by lazy { QuoteDB.getDB(this) }
+
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,10 +38,14 @@ class FavoritesActivity : AppCompatActivity() {
 
         val quotes: java.util.ArrayList<String>? = intent.getStringArrayListExtra("Quotes")
 
-//        Getting from shared preferences
-        val sp = getSharedPreferences("Fav", Context.MODE_PRIVATE)
-//        Favourite list - local copy - with all quotes
-        val fav = sp.getStringSet("fav", null)?.toMutableList()
+        val fav = db.quoteDao().allQuotes
+        //  Favourite list (Local copy) from DB to check if it is favourite or not
+        val favL = ArrayList<Quote>()
+        for (i in fav)
+        {
+            if (i.fav)
+                favL.add(i)
+        }
 
         val btnShare: ImageView = findViewById(R.id.im_quote_share)
         val btnShareImg: ImageView = findViewById(R.id.im_quote_share_img)
@@ -118,7 +124,7 @@ class FavoritesActivity : AppCompatActivity() {
                     btnReStyle.visibility = View.VISIBLE
                     btnReColor.visibility = View.VISIBLE
                     btnShareImg.visibility = View.VISIBLE
-                    if (!fav.isNullOrEmpty()) btnFav.visibility = View.VISIBLE
+                    if (favL.isNotEmpty()) btnFav.visibility = View.VISIBLE
                 }
             })
 
@@ -131,33 +137,29 @@ class FavoritesActivity : AppCompatActivity() {
             iShare.putExtra(Intent.EXTRA_TEXT, tvQuote.text.toString())
             startActivity(Intent.createChooser(iShare, "Share quote via"))
         }
-        if (!fav.isNullOrEmpty()) {
+        if (favL.isNotEmpty()) {
             var curr = 0
-            var curIndex = fav[curr].toInt()
-
+            var curIndex = favL[curr].id
             val liked = R.drawable.ic_heart_black_24dp
             val unLike = R.drawable.ic_heart_outline_24dp
 
-//            Favourite list in Shared preference to check if it is favourite or not
-            var favL: MutableList<String>? = fav
 
             tvQuote.text = quotes?.get(curIndex)
 
-            cv.setOnTouchListener(object :
-                OnSwipeTouchListener(this@FavoritesActivity) {
+            cv.setOnTouchListener(object : OnSwipeTouchListener(this@FavoritesActivity) {
                 override fun onDoubleClick() {
                     btnFav.performClick()
                 }
             })
-            if (fav.size > 1) cv.setOnTouchListener(object :
-            OnSwipeTouchListener(this@FavoritesActivity) {
+            if (favL.size > 1) cv.setOnTouchListener(object : OnSwipeTouchListener(this@FavoritesActivity) {
                 override fun onDoubleClick() {
                     btnFav.performClick()
                 }
             override fun onSwipeLeft() {
-                if (--curr < 0) curr = fav.size - 1
-                curIndex = fav[curr].toInt()
-                if (favL != null && !favL!!.contains(curIndex.toString())) {
+                if (--curr < 0) curr = favL.size - 1
+                curIndex = favL[curr].id
+                val chkFav: Boolean? = db.quoteDao().chkFav(curIndex)
+                if ((chkFav != null) && !chkFav) {
                     btnFav.setImageResource(unLike)
                     btnFav.tag = "unlike"
                 } else {
@@ -168,10 +170,11 @@ class FavoritesActivity : AppCompatActivity() {
             }
 
             override fun onSwipeRight() {
-                if (++curr >= fav.size) curr = 0
-                curIndex = fav[curr].toInt()
+                if (++curr >= favL.size) curr = 0
+                curIndex = favL[curr].id
                 tvQuote.text = quotes?.get(curIndex)
-                if (favL != null && !favL!!.contains(curIndex.toString())) {
+                val chkFav: Boolean? = db.quoteDao().chkFav(curIndex)
+                if ((chkFav != null) && !chkFav) {
                     btnFav.setImageResource(unLike)
                     btnFav.tag = "unlike"
                 } else {
@@ -186,7 +189,8 @@ class FavoritesActivity : AppCompatActivity() {
             }
         })
 
-            if (fav.contains(curIndex.toString())) {
+            val chkFav: Boolean? = db.quoteDao().chkFav(curIndex)
+            if ((chkFav != null) && chkFav) {
                 btnFav.setImageResource(liked)
                 btnFav.tag = "like"
             }
@@ -195,26 +199,12 @@ class FavoritesActivity : AppCompatActivity() {
                 if (btnFav.tag == "like") {
                     btnFav.setImageResource(unLike)
                     btnFav.tag = "unlike"
-                    val favQ = sp.getStringSet("fav", null)?.toMutableSet()
-                    favQ?.remove(curIndex.toString())
-                    val editor = sp.edit()
-                    editor.apply {
-                        putStringSet("fav", favQ)
-                        apply()
-                    }
+                    db.quoteDao().favQuote(Quote(curIndex, false))
                 } else {
                     btnFav.setImageResource(liked)
                     btnFav.tag = "like"
-                    val favQ = sp.getStringSet("fav", null)?.toMutableSet()
-                    favQ?.add(curIndex.toString())
-                    val editor = sp.edit()
-                    editor.apply {
-                        putStringSet("fav", favQ)
-                        apply()
-                    }
+                    db.quoteDao().favQuote(Quote(curIndex, true))
                 }
-//                Updating shared preference list copy to check if it is favourite or not.
-                favL = sp.getStringSet("fav", null)?.toMutableList()
             }
         }
     }
